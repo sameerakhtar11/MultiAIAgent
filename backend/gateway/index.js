@@ -11,6 +11,12 @@ import morgan from "morgan";
 const port = process.env.PORT;
 
 const app = express()
+
+app.use((req, res, next) => {
+    console.log(`[Gateway] ${req.method} ${req.url}`);
+    next();
+})
+
 app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true
