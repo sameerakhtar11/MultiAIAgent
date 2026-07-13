@@ -1,11 +1,11 @@
-// import React from 'react'
+import React from 'react'
 
-// function ChatInput() {
-//   return (
-//     <div>
+function ChatInput() {
+  return (
+    <div>
       
-//     </div>
-//   )
-// }
+    </div>
+  )
+}
 
-// export default ChatInput
+export default ChatInput
