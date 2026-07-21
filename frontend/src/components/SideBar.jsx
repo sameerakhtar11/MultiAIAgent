@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
     PanelLeft,
     PanelRight,
@@ -10,19 +10,23 @@ import {
     SquarePen,
     Coins,
     LogOut,
-    Sparkles
+    Search,
+    Pencil,
+    Check
 } from "lucide-react";
 
 import { useDispatch, useSelector } from "react-redux";
 
 import { getConversation } from "../features/getConversation";
 import { createConversation } from "../features/createConversation";
+import { updateConversationTitle as updateConversationTitleApi } from "../features/updateConversationTitle";
 import logOut from "../features/logOut";
 
 import {
     addConversation,
     setConversation,
     selectConversation,
+    updateConversationTitle,
 } from "../redux/conversationSlice";
 import { setUserData } from "../redux/userSlice";
 import { auth, googleProvider } from "../../utils/firebase";
@@ -40,6 +44,9 @@ function SideBar() {
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [search, setSearch] = useState("");
+    const [editingId, setEditingId] = useState(null);
+    const [editingValue, setEditingValue] = useState("");
 
     const loadConversations = async () => {
         try {
@@ -101,6 +108,28 @@ function SideBar() {
         }
     };
 
+    const startRename = (e, conv, index) => {
+        e.stopPropagation();
+        setEditingId(conv._id || index);
+        setEditingValue(conv.title || `Conversation ${index + 1}`);
+    };
+
+    const saveRename = async (conv) => {
+        const title = editingValue.trim();
+        setEditingId(null);
+        if (!title || title === conv.title) return;
+
+        dispatch(updateConversationTitle({ id: conv._id, title }));
+        await updateConversationTitleApi(conv._id, title);
+    };
+
+    const filteredConversations = useMemo(() => {
+        if (!search.trim()) return conversations;
+        return conversations.filter((c) =>
+            (c.title || "").toLowerCase().includes(search.trim().toLowerCase())
+        );
+    }, [conversations, search]);
+
     const SidebarContent = () => (
         <div className="flex h-full flex-col">
             {/* Header */}
@@ -113,25 +142,10 @@ function SideBar() {
                         >
                             <PanelLeft size={20} className="stroke-[1.5]" />
                         </button>
-                        {/* <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-white tracking-wide">
-                MultiAI
-              </h2> */}
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 shadow-lg">
 
-                            <Sparkles className="text-white" size={20} />
-
-                        </div>
-
-                        <div>
-
-                            <h2 className="text-lg font-bold text-white">
-                                MultiAI
-                            </h2>
-                            <span className="text-[10px] text-indigo-400 bg-indigo-950/40 border border-indigo-500/20 px-2 py-0.5 rounded-full font-semibold">
-                                free
-                            </span>
-                        </div>
+                        <h2 className="text-lg font-bold text-white">
+                            CortexAI
+                        </h2>
                     </div>
                 )}
 
@@ -145,17 +159,22 @@ function SideBar() {
                 )}
 
                 {!collapsed && (
-                    <button
-                        onClick={handleCreateConversation}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all cursor-pointer"
-                    >
-                        <SquarePen size={18} className="stroke-[1.5]" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-indigo-400 bg-indigo-950/40 border border-indigo-500/20 px-2 py-0.5 rounded-full tracking-wide">
+                            free
+                        </span>
+                        <button
+                            onClick={handleCreateConversation}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all cursor-pointer"
+                        >
+                            <SquarePen size={18} className="stroke-[1.5]" />
+                        </button>
+                    </div>
                 )}
             </div>
 
             {/* New Chat Button */}
-            <div className={`p-4 flex justify-center`}>
+            <div className="p-4 pb-2 flex justify-center">
                 <button
                     onClick={handleCreateConversation}
                     className={`flex items-center justify-center rounded-2xl bg-gradient-to-r from-[#5f33e1] to-[#8d44e7] text-white shadow-lg shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-[0.98] transition-all cursor-pointer
@@ -166,53 +185,102 @@ function SideBar() {
                 </button>
             </div>
 
+            {/* Search */}
+            {!collapsed && (
+                <div className="px-4 pb-2">
+                    <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2 focus-within:border-indigo-500/40 transition-colors">
+                        <Search size={15} className="text-slate-500 shrink-0" />
+                        <input
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Search chats..."
+                            className="w-full bg-transparent text-sm text-slate-200 placeholder:text-slate-600 outline-none"
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* Recents */}
             <div className="flex-1 overflow-y-auto px-3 py-2 custom-scrollbar">
                 {!collapsed && (
-                    <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                         Recents
                     </p>
                 )}
 
-                {conversations?.length === 0 ? (
+                {filteredConversations?.length === 0 ? (
                     <div className="mt-10 text-center text-xs text-slate-600">
-                        {!collapsed && "No conversations yet"}
+                        {!collapsed && (search ? "No matching chats" : "No conversations yet")}
                     </div>
                 ) : (
-                    <div className="space-y-2">
-                        {conversations.map((conv, index) => {
+                    <div className="space-y-1">
+                        {filteredConversations.map((conv, index) => {
+                            const rowId = conv._id || index;
                             const isActive = selectedConversation?._id === conv._id;
+                            const isEditing = editingId === rowId;
+
                             return (
-                                <button
-                                    key={conv._id || index}
+                                <div
+                                    key={rowId}
                                     onClick={() => {
+                                        if (isEditing) return;
                                         dispatch(selectConversation(conv));
                                         setMobileOpen(false);
                                     }}
                                     title={conv.title || `Conversation ${index + 1}`}
-                                    className={`group flex items-center rounded-2xl transition-all duration-200 border cursor-pointer
-                    ${collapsed ? "justify-center p-1 w-10 h-10 mx-auto" : "w-full gap-3.5 px-3 py-2.5"}
+                                    className={`group flex items-center rounded-xl transition-all duration-150 cursor-pointer
+                    ${collapsed ? "justify-center p-1 w-10 h-10 mx-auto" : "w-full gap-2.5 px-3 py-2.5"}
                     ${isActive
-                                            ? "bg-[#15172b] border-[#292b52] text-white shadow-sm"
-                                            : "bg-transparent border-transparent text-slate-400 hover:bg-white/5 hover:text-white"
+                                            ? "bg-[#15172b] text-white"
+                                            : "bg-transparent text-slate-400 hover:bg-white/5 hover:text-white"
                                         }`}
                                 >
-                                    <div className={`flex items-center justify-center rounded-xl border shrink-0 transition-all duration-200
-                    ${collapsed ? "w-8 h-8" : "w-9 h-9"}
-                    ${isActive
-                                            ? "bg-[#202246] border-[#3e4282]/50 text-indigo-400"
-                                            : "bg-slate-800/20 border-slate-700/20 text-slate-400 group-hover:bg-slate-700/30 group-hover:text-slate-200"
-                                        }`}
-                                    >
-                                        <MessageSquare size={collapsed ? 14 : 16} className="stroke-[2]" />
-                                    </div>
+                                    <MessageSquare
+                                        size={collapsed ? 14 : 15}
+                                        className={`shrink-0 stroke-[2] ${isActive ? "text-indigo-400" : "text-slate-500"}`}
+                                    />
 
                                     {!collapsed && (
-                                        <span className={`truncate text-sm ${isActive ? "font-semibold" : "font-medium text-slate-300"}`}>
-                                            {conv.title || `Conversation ${index + 1}`}
-                                        </span>
+                                        isEditing ? (
+                                            <input
+                                                autoFocus
+                                                value={editingValue}
+                                                onChange={(e) => setEditingValue(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") saveRename(conv);
+                                                    if (e.key === "Escape") setEditingId(null);
+                                                }}
+                                                onBlur={() => saveRename(conv)}
+                                                className="flex-1 min-w-0 bg-transparent border-b border-indigo-500/50 text-sm text-white outline-none"
+                                            />
+                                        ) : (
+                                            <span className={`flex-1 min-w-0 truncate text-sm ${isActive ? "font-semibold" : "font-medium"}`}>
+                                                {conv.title || `Conversation ${index + 1}`}
+                                            </span>
+                                        )
                                     )}
-                                </button>
+
+                                    {!collapsed && !isEditing && (
+                                        <button
+                                            onClick={(e) => startRename(e, conv, index)}
+                                            className="shrink-0 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+                                            title="Rename"
+                                        >
+                                            <Pencil size={13} />
+                                        </button>
+                                    )}
+
+                                    {!collapsed && isEditing && (
+                                        <button
+                                            onMouseDown={(e) => { e.preventDefault(); saveRename(conv); }}
+                                            className="shrink-0 text-indigo-400 hover:text-indigo-300 p-1 rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+                                            title="Save"
+                                        >
+                                            <Check size={14} />
+                                        </button>
+                                    )}
+                                </div>
                             );
                         })}
                     </div>
@@ -317,7 +385,7 @@ function SideBar() {
                 <SidebarContent />
             </aside>
 
-            {/* Desktop Sidebar */}
+            {/* Desktop Sidebar — this whole block was missing, which is why nothing showed at full screen */}
             <aside
                 className={`hidden lg:flex h-screen shrink-0 flex-col border-r border-white/5 bg-[#090b11] transition-all duration-300
         ${collapsed ? "w-20" : "w-72"}
