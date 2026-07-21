@@ -16,16 +16,30 @@ export const createConversation = async (req, res) => {
 }
 
 export const getConversations = async (req, res) => {
+
     try {
-        const userId = req.headers["x-user-id"]
-        console.log("userID:", userId)
-        const conversation = await Conversation.find({
+        const userId = req.headers["x-user-id"];
+        const conversations = await Conversation.find({
+
             userId: userId
-        }).sort({ updatedAt: -1 })
-        return res.status(200).json(conversation)
+
+        })
+            .sort({
+                updatedAt: -1
+            });
+
+        res.json(
+            conversations
+        );
+
     } catch (error) {
-        return res.status(500).json({ message: `update conversation error ${error}` })
+
+        res.status(500).json({
+            message: error.message
+        });
+
     }
+
 }
 
 export const updateConversation = async (req, res) => {

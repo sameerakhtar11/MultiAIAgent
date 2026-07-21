@@ -4,8 +4,8 @@ import { createConversation, getConversations, getMessages, saveMessage, updateC
 const router = express.Router()
 
 router.get("/create-conversation", createConversation)
-router.get("/get-conversation", getConversations)
-router.post("/update-convrsation", updateConversation)
+router.get("/get-conversations", getConversations)
+router.post("/update-conversation", updateConversation)
 router.post("/save-message", saveMessage)
 router.get("/get-message/:conversationId", getMessages)
 
