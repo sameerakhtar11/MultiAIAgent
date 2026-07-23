@@ -1,4 +1,4 @@
-import { getModel } from "../config/llmModels"
+import { getModel } from "../config/llmModels.js"
 
 
 export const chatAgent=async(state)=>{
@@ -17,6 +17,6 @@ export const chatAgent=async(state)=>{
 
     return{
         ...state,
-        aiResponse:aiResponse.content
+        aiResponse: response.content
     }
 }
