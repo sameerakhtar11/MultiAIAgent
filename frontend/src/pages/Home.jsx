@@ -35,17 +35,17 @@ const dispatch=useDispatch()
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d0f14] text-white">
+    <div className="relative flex h-screen w-full overflow-hidden bg-[#0d0f14] text-white">
       {/* Background Glow */}
-      <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-blue-500/20 blur-[120px]"></div>
-      <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-purple-500/20 blur-[120px]"></div>
+      <div className="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-blue-500/20 blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-purple-500/20 blur-[120px] pointer-events-none"></div>
 
-<SideBar/>
-<ChatArea/>
-<Artifact/>
+      <SideBar />
+      <ChatArea />
+      <Artifact />
 
       {!userData && (
-        <>
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0d0f14]/80 backdrop-blur-md">
           {/* Login Card */}
           <div className="relative z-10 w-[380px] rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
             {/* Logo */}
@@ -67,7 +67,7 @@ const dispatch=useDispatch()
             {/* Google Button */}
             <button
               onClick={googleLogin}
-              className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl bg-white py-3 font-semibold text-gray-800 transition-all duration-300 hover:scale-[1.02] hover:bg-gray-100 active:scale-95"
+              className="mt-8 flex w-full items-center justify-center gap-3 rounded-xl bg-white py-3 font-semibold text-gray-800 transition-all duration-300 hover:scale-[1.02] hover:bg-gray-100 active:scale-95 cursor-pointer"
             >
               <FcGoogle size={24} />
               Continue with Google
@@ -95,7 +95,7 @@ const dispatch=useDispatch()
               .
             </p>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
